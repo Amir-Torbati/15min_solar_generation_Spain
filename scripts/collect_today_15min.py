@@ -3,7 +3,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 import os
 
-# --- CONFIG ---
+# --- Config ---
 API_TOKEN = "478a759c0ef1ce824a835ddd699195ff0f66a9b5ae3b477e88a579c6b7ec47c5"
 BASE_URL = "https://api.esios.ree.es/indicators/541"
 HEADERS = {
@@ -12,37 +12,47 @@ HEADERS = {
     "x-api-key": API_TOKEN,
 }
 
-# --- TIME RANGE: Last 15 minutes ---
+# --- Time setup ---
 now = datetime.utcnow().replace(second=0, microsecond=0)
-start = now - timedelta(minutes=15)
+today_str = now.strftime("%Y-%m-%d")
+daily_file = f"data/{today_str}.csv"
+os.makedirs("data", exist_ok=True)
 
+# --- Step 1: Determine fetch range ---
+if os.path.exists(daily_file):
+    df_existing = pd.read_csv(daily_file, parse_dates=["datetime"])
+    last_dt = df_existing["datetime"].max()
+    start = pd.to_datetime(last_dt) + timedelta(minutes=15)
+else:
+    df_existing = pd.DataFrame()
+    start = now.replace(hour=0, minute=0)
+
+end = now
+
+if start >= end:
+    print("✅ No new data to fetch.")
+    exit()
+
+# --- Step 2: Fetch missing range ---
 params = {
     "start_date": start.isoformat() + "Z",
-    "end_date": now.isoformat() + "Z",
+    "end_date": end.isoformat() + "Z",
     "time_trunc": "quarter-hour"
 }
 
-# --- FETCH FROM API ---
-print(f"📡 Fetching solar PV data from {start} to {now}")
+print(f"📡 Fetching from {start} to {end}...")
+
 res = requests.get(BASE_URL, headers=HEADERS, params=params)
 res.raise_for_status()
 data = res.json()["indicator"]["values"]
 
-# --- CREATE DATAFRAME ---
 df_new = pd.DataFrame(data)
 df_new["datetime"] = pd.to_datetime(df_new["datetime"])
 df_new = df_new.sort_values("datetime")
 
-# --- DAILY FILE ---
-date_str = now.strftime("%Y-%m-%d")
-file_path = f"data/{date_str}.csv"
-os.makedirs("data", exist_ok=True)
+# --- Step 3: Combine and save ---
+df_combined = pd.concat([df_existing, df_new]).drop_duplicates(subset=["datetime"]).sort_values("datetime")
+df_combined.to_csv(daily_file, index=False)
 
-if os.path.exists(file_path):
-    df_existing = pd.read_csv(file_path, parse_dates=["datetime"])
-    df_combined = pd.concat([df_existing, df_new]).drop_duplicates(subset=["datetime"]).sort_values("datetime")
-else:
-    df_combined = df_new
+print(f"✅ {len(df_new)} new rows added to {daily_file}")
 
-df_combined.to_csv(file_path, index=False)
-print(f"✅ Updated {file_path} with {len(df_new)} new rows.")
