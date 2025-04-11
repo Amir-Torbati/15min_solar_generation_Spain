@@ -25,7 +25,7 @@ jobs:
         run: pip install requests pandas
 
       - name: ⚡ Update today's file with all missing 15-min data
-        run: scripts/collect_today_15min.py
+        run: python scripts/collect_today_15min.py
 
       - name: 📤 Commit and push updated data
         run: |
@@ -43,8 +43,3 @@ jobs:
 
           # ✅ Push final commit
           git push
-
-
-
-
-
