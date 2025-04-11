@@ -1,19 +1,19 @@
-name: Fetch Solar PV Data Every 15 Minutes
+name: Fetch Solar Data Every 15 Minutes
 
 permissions:
   contents: write
 
 on:
   schedule:
-    - cron: '*/15 * * * *'  # every 15 min UTC
+    - cron: '*/15 * * * *'  # ✅ Runs every 15 min (UTC)
   workflow_dispatch:
 
 jobs:
-  fetch-solar:
+  fetch-solar-data:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 📥 Checkout repo
+      - name: 📥 Checkout repository
         uses: actions/checkout@v3
 
       - name: 🐍 Set up Python
@@ -21,19 +21,19 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: 📦 Install Python packages
-        run: |
-          pip install requests pandas pyarrow duckdb
+      - name: 📦 Install Python dependencies
+        run: pip install requests pandas
 
-      - name: ⚡ Fetch and append 15-minute solar data
-        run: python scripts/append_new_hour.py
+      - name: ⚡ Run 15-minute data fetch script
+        run: python fetch_solar.py
 
-      - name: 📤 Commit & push updated database
+      - name: 📤 Commit and push updated solar data
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
-          git add database/
-          git commit -m "📈 Add 15-minute solar data: $(date -u +'%Y-%m-%d %H:%M:%S')" || echo "No changes"
+          git add data/solar_database.csv
+          git commit -m "🔁 Update 15-min solar data: $(date -u +'%Y-%m-%d %H:%M:%S')" || echo "No changes to commit"
           git push
+
 
 
