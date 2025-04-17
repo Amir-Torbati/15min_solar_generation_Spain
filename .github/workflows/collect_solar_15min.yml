@@ -12,6 +12,10 @@ jobs:
   collect-daily:
     runs-on: ubuntu-latest
 
+    # 👇 اینو اضافه کن برای ست‌کردن توکن
+    env:
+      ESIOS_API_TOKEN: ${{ secrets.ESIOS_API_TOKEN }}
+
     steps:
       - name: 📥 Checkout repo
         uses: actions/checkout@v3
@@ -43,3 +47,4 @@ jobs:
 
           # ✅ Push final commit
           git push
+
