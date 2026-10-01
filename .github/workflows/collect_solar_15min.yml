@@ -1,50 +1,15 @@
-name: Collect Solar PV Data Every 15 Minutes (Split by Day)
-
-permissions:
-  contents: write
-
+name: Legacy collection retired
 on:
-  schedule:
-    - cron: '*/15 * * * *'  # Every 15 minutes UTC
   workflow_dispatch:
-
+permissions:
+  contents: read
 jobs:
-  collect-daily:
-    runs-on: ubuntu-latest
-
-    # 👇 اینو اضافه کن برای ست‌کردن توکن
-    env:
-      ESIOS_API_TOKEN: ${{ secrets.ESIOS_API_TOKEN }}
-
+  migration:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 1
     steps:
-      - name: 📥 Checkout repo
-        uses: actions/checkout@v3
-
-      - name: 🐍 Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-
-      - name: 📦 Install dependencies
-        run: pip install requests pandas
-
-      - name: ⚡ Update today's file with all missing 15-min data
-        run: python scripts/collect_today_15min.py
-
-      - name: 📤 Commit and push updated data
+      - name: Use the validated grouped collector
         run: |
-          git config user.name "github-actions"
-          git config user.email "actions@github.com"
-
-          # ✅ Stage changes first
-          git add data/
-
-          # ✅ Commit if there are changes
-          git commit -m "🌞 Update daily solar file: $(date -u +'%Y-%m-%d %H:%M:%S')" || echo "No changes to commit"
-
-          # ✅ Pull remote changes (if any) safely
-          git pull --rebase --autostash
-
-          # ✅ Push final commit
-          git push
-
+          echo 'This legacy workflow is retired; see the README migration notice.'
+          echo 'Use Amir-Torbati/ree-data-platform fundamentals.yml for the five verified curves.'
+          exit 1
